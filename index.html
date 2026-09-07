@@ -258,9 +258,9 @@
     <!-- 方向切换 -->
     <div class="direction-bar">
       <div class="direction-label">
-        <span class="badge badge-external" id="badgeFrom">外部</span>
+        <span class="badge badge-external" id="badgeFrom">晓天荟萃</span>
         <span class="arrow-big">→</span>
-        <span class="badge badge-internal" id="badgeTo">内部</span>
+        <span class="badge badge-internal" id="badgeTo">阿里内部</span>
       </div>
       <button id="switchBtn" class="btn-switch" type="button">切换方向</button>
     </div>
@@ -274,7 +274,7 @@
     </div>
 
     <!-- 输入 -->
-    <label for="input" id="inputLabel">粘贴外部网址</label>
+    <label for="input" id="inputLabel">粘贴晓天荟萃网址</label>
     <textarea id="input" spellcheck="false" placeholder="https://www.skyvendorise.com/corpora/labeling/sdk?subTaskId=68233815&missionType=sample&taskId=51972&projectId=5508"></textarea>
 
     <div class="row">
@@ -289,7 +289,7 @@
 
     <!-- 输出 -->
     <div class="output-wrap">
-      <label for="output" id="outputLabel" style="margin-bottom:6px;">转换后是内部网址</label>
+      <label for="output" id="outputLabel" style="margin-bottom:6px;">转换后是阿里内部网址</label>
       <div id="output" class="output empty">尚未生成</div>
     </div>
 
@@ -327,7 +327,7 @@
     }
   ];
 
-  var currentDirIndex = 0; // 0 = 外部→内部, 1 = 内部→外部
+  var currentDirIndex = 0; // 0 = 晓天荟萃→阿里内部, 1 = 阿里内部→晓天荟萃
 
   // DOM 元素
   var input = document.getElementById('input');
@@ -371,7 +371,7 @@
     var dir = getDir();
     
     if (dir.useWildcard) {
-      // 内部→外部：匹配任何 *.alibaba-inc.com 或 alibaba-inc.com
+      // 阿里内部→晓天荟萃：匹配任何 *.alibaba-inc.com 或 alibaba-inc.com
       var match = url.match(/^(https?:\/\/)([^\/]*\.)?alibaba-inc\.com(\/.*)?$/i);
       if (!match) {
         return { matched: false, value: url };
@@ -381,7 +381,7 @@
       var value = normalizeSlashes(dir.target + pathPart);
       return { matched: true, value: value };
     } else {
-      // 外部→内部：精确匹配
+      // 晓天荟萃→阿里内部：精确匹配
       if (!startsWithSource(url, dir.source)) {
         return { matched: false, value: url };
       }
