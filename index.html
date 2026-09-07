@@ -309,6 +309,7 @@
       toLabel: '内部',
       source: 'https://www.skyvendorise.com',
       target: 'https://label.alibaba-inc.com',
+      useWildcard: false,
       inputLabel: '粘贴外部网址',
       outputLabel: '转换后是内部网址',
       placeholder: 'https://www.skyvendorise.com/corpora/labeling/sdk?subTaskId=68233815&missionType=sample&taskId=51972&projectId=5508'
@@ -317,11 +318,12 @@
       name: '内部 → 外部',
       fromLabel: '内部',
       toLabel: '外部',
-      source: 'https://label.alibaba-inc.com',
+      source: '*.alibaba-inc.com',
       target: 'https://www.skyvendorise.com',
-      inputLabel: '粘贴内部网址',
+      useWildcard: true,
+      inputLabel: '粘贴内部网址（支持所有 *.alibaba-inc.com）',
       outputLabel: '转换后是外部网址',
-      placeholder: 'https://label.alibaba-inc.com/corpora/labeling/sdk?subTaskId=68233815&missionType=sample&taskId=51972&projectId=5508'
+      placeholder: 'https://label.alibaba-inc.com/corpora/labeling/sdk?...\n或 https://dataai.alibaba-inc.com/corpora/labeling/sdk?...'
     }
   ];
 
@@ -367,14 +369,28 @@
 
   function compute(url) {
     var dir = getDir();
-    if (!startsWithSource(url, dir.source)) {
-      return { matched: false, value: url };
+    
+    if (dir.useWildcard) {
+      // 内部→外部：匹配任何 *.alibaba-inc.com 或 alibaba-inc.com
+      var match = url.match(/^(https?:\/\/)([^\/]*\.)?alibaba-inc\.com(\/.*)?$/i);
+      if (!match) {
+        return { matched: false, value: url };
+      }
+      // 提取路径部分（包括查询参数），拼接到目标域名后面
+      var pathPart = match[3] || '/';
+      var value = normalizeSlashes(dir.target + pathPart);
+      return { matched: true, value: value };
+    } else {
+      // 外部→内部：精确匹配
+      if (!startsWithSource(url, dir.source)) {
+        return { matched: false, value: url };
+      }
+      var cut = dir.source.length;
+      if (url.charAt(cut) === '/') cut += 1;
+      var rest = url.slice(cut);
+      var value = normalizeSlashes(dir.target + '/' + rest.replace(/^\/+/, ''));
+      return { matched: true, value: value };
     }
-    var cut = dir.source.length;
-    if (url.charAt(cut) === '/') cut += 1;
-    var rest = url.slice(cut);
-    var value = normalizeSlashes(dir.target + '/' + rest.replace(/^\/+/, ''));
-    return { matched: true, value: value };
   }
 
   function setStatus(kind, text) {
@@ -432,9 +448,14 @@
     if (!r.matched) {
       output.textContent = url;
       output.classList.remove('empty');
-      matchInfo.textContent = '未匹配' + dir.fromLabel + '前缀，已原样保留';
+      if (dir.useWildcard) {
+        matchInfo.textContent = '未匹配 *.alibaba-inc.com，已原样保留';
+        showHint('输入的网址不是以 .alibaba-inc.com 结尾（不是内部网址），已按原样保留。你可以直接点"打开转换后的网址"访问原始地址。');
+      } else {
+        matchInfo.textContent = '未匹配' + dir.fromLabel + '前缀，已原样保留';
+        showHint('输入的网址不是以 ' + dir.source + ' 开头（不是' + dir.fromLabel + '网址），已按原样保留。你可以直接点"打开转换后的网址"访问原始地址。');
+      }
       setStatus('warn', '未匹配到规则');
-      showHint('输入的网址不是以 ' + dir.source + ' 开头（不是' + dir.fromLabel + '网址），已按原样保留。你可以直接点"打开转换后的网址"访问原始地址。');
       currentResult = url;
       refreshButtons();
       return;
