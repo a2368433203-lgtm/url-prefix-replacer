@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>网址转换器（外部 ⇄ 内部）</title>
+<title>网址转换器（晓天荟萃 ⇄ 阿里内部）</title>
 <style>
   * { box-sizing: border-box; }
   body {
@@ -253,7 +253,7 @@
 <body>
   <main class="card">
     <h1>网址转换器</h1>
-    <p class="subtitle">在"外部"和"内部"网址之间互相转换，路径与查询参数原样保留。</p>
+    <p class="subtitle">在"晓天荟萃"和"阿里内部"网址之间互相转换，路径与查询参数原样保留。</p>
 
     <!-- 方向切换 -->
     <div class="direction-bar">
@@ -304,25 +304,25 @@
   // 两个方向的配置
   var DIRECTIONS = [
     {
-      name: '外部 → 内部',
-      fromLabel: '外部',
-      toLabel: '内部',
+      name: '晓天荟萃 → 阿里内部',
+      fromLabel: '晓天荟萃',
+      toLabel: '阿里内部',
       source: 'https://www.skyvendorise.com',
       target: 'https://label.alibaba-inc.com',
       useWildcard: false,
-      inputLabel: '粘贴外部网址',
-      outputLabel: '转换后是内部网址',
+      inputLabel: '粘贴晓天荟萃网址',
+      outputLabel: '转换后是阿里内部网址',
       placeholder: 'https://www.skyvendorise.com/corpora/labeling/sdk?subTaskId=68233815&missionType=sample&taskId=51972&projectId=5508'
     },
     {
-      name: '内部 → 外部',
-      fromLabel: '内部',
-      toLabel: '外部',
+      name: '阿里内部 → 晓天荟萃',
+      fromLabel: '阿里内部',
+      toLabel: '晓天荟萃',
       source: '*.alibaba-inc.com',
       target: 'https://www.skyvendorise.com',
       useWildcard: true,
-      inputLabel: '粘贴内部网址（支持所有 *.alibaba-inc.com）',
-      outputLabel: '转换后是外部网址',
+      inputLabel: '粘贴阿里内部网址（支持所有 *.alibaba-inc.com）',
+      outputLabel: '转换后是晓天荟萃网址',
       placeholder: 'https://label.alibaba-inc.com/corpora/labeling/sdk?...\n或 https://dataai.alibaba-inc.com/corpora/labeling/sdk?...'
     }
   ];
@@ -425,8 +425,8 @@
     outputLabel.textContent = dir.outputLabel;
     input.placeholder = dir.placeholder;
     // 切换 badge 颜色类
-    badgeFrom.className = 'badge ' + (dir.fromLabel === '外部' ? 'badge-external' : 'badge-internal');
-    badgeTo.className = 'badge ' + (dir.toLabel === '内部' ? 'badge-internal' : 'badge-external');
+    badgeFrom.className = 'badge ' + (dir.fromLabel === '晓天荟萃' ? 'badge-external' : 'badge-internal');
+    badgeTo.className = 'badge ' + (dir.toLabel === '阿里内部' ? 'badge-internal' : 'badge-external');
   }
 
   function render(rawUrl) {
@@ -450,7 +450,7 @@
       output.classList.remove('empty');
       if (dir.useWildcard) {
         matchInfo.textContent = '未匹配 *.alibaba-inc.com，已原样保留';
-        showHint('输入的网址不是以 .alibaba-inc.com 结尾（不是内部网址），已按原样保留。你可以直接点"打开转换后的网址"访问原始地址。');
+        showHint('输入的网址不是以 .alibaba-inc.com 结尾（不是阿里内部网址），已按原样保留。你可以直接点"打开转换后的网址"访问原始地址。');
       } else {
         matchInfo.textContent = '未匹配' + dir.fromLabel + '前缀，已原样保留';
         showHint('输入的网址不是以 ' + dir.source + ' 开头（不是' + dir.fromLabel + '网址），已按原样保留。你可以直接点"打开转换后的网址"访问原始地址。');
