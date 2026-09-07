@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>URL 前缀替换器</title>
+<title>网址转换器（外部 ⇄ 内部）</title>
 <style>
   * { box-sizing: border-box; }
   body {
@@ -32,10 +32,73 @@
     letter-spacing: 0.2px;
   }
   .subtitle {
-    margin: 0 0 20px;
+    margin: 0 0 18px;
     font-size: 13px;
     color: #64748b;
   }
+
+  /* 方向切换区域 */
+  .direction-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 14px;
+    margin-bottom: 14px;
+    background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
+    border: 1px solid #c7d2fe;
+    border-radius: 12px;
+  }
+  .direction-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+    font-weight: 500;
+  }
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+  }
+  .badge-external {
+    background: #fef3c7;
+    color: #92400e;
+    border: 1px solid #fde68a;
+  }
+  .badge-internal {
+    background: #dbeafe;
+    color: #1e40af;
+    border: 1px solid #bfdbfe;
+  }
+  .arrow-big {
+    color: #6366f1;
+    font-size: 18px;
+    font-weight: bold;
+  }
+  .btn-switch {
+    appearance: none;
+    border: none;
+    cursor: pointer;
+    padding: 8px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    border-radius: 8px;
+    background: #4f46e5;
+    color: #ffffff;
+    box-shadow: 0 2px 8px rgba(79, 70, 229, 0.3);
+    transition: transform .05s ease, background .15s ease;
+    font-family: inherit;
+    white-space: nowrap;
+  }
+  .btn-switch:hover { background: #4338ca; }
+  .btn-switch:active { transform: translateY(1px); }
+
+  /* 规则展示 */
   .rule {
     display: flex;
     flex-wrap: wrap;
@@ -59,6 +122,7 @@
     word-break: break-all;
   }
   .arrow { color: #94a3b8; }
+
   label {
     display: block;
     font-size: 12px;
@@ -188,89 +252,132 @@
 </head>
 <body>
   <main class="card">
-    <h1>URL 前缀替换器</h1>
-    <p class="subtitle">把 URL 中的源域名前缀替换成目标域名前缀，路径与查询参数原样保留。</p>
+    <h1>网址转换器</h1>
+    <p class="subtitle">在"外部"和"内部"网址之间互相转换，路径与查询参数原样保留。</p>
 
+    <!-- 方向切换 -->
+    <div class="direction-bar">
+      <div class="direction-label">
+        <span class="badge badge-external" id="badgeFrom">外部</span>
+        <span class="arrow-big">→</span>
+        <span class="badge badge-internal" id="badgeTo">内部</span>
+      </div>
+      <button id="switchBtn" class="btn-switch" type="button">切换方向</button>
+    </div>
+
+    <!-- 规则展示 -->
     <div class="rule">
-      <span>规则</span>
+      <span>当前规则</span>
       <code id="ruleFrom">https://www.skyvendorise.com</code>
       <span class="arrow">→</span>
       <code id="ruleTo">https://label.alibaba-inc.com</code>
-      <span style="margin-left:auto;font-size:11px;color:#94a3b8;">域名匹配不区分大小写 · 自动规范化斜杠</span>
     </div>
 
-    <label for="input">粘贴原 URL</label>
+    <!-- 输入 -->
+    <label for="input" id="inputLabel">粘贴外部网址</label>
     <textarea id="input" spellcheck="false" placeholder="https://www.skyvendorise.com/corpora/labeling/sdk?subTaskId=68233815&missionType=sample&taskId=51972&projectId=5508"></textarea>
 
     <div class="row">
       <span id="status" class="status"><span class="dot"></span><span id="statusText">等待输入</span></span>
       <div class="actions">
         <button id="copyBtn" class="btn-ghost" type="button" disabled>复制结果</button>
-        <button id="openBtn" class="btn-primary" type="button" disabled>打开替换后的 URL</button>
+        <button id="openBtn" class="btn-primary" type="button" disabled>打开转换后的网址</button>
       </div>
     </div>
 
     <div class="hint" id="hint"></div>
 
+    <!-- 输出 -->
     <div class="output-wrap">
-      <label for="output" style="margin-bottom:6px;">替换后</label>
+      <label for="output" id="outputLabel" style="margin-bottom:6px;">转换后是内部网址</label>
       <div id="output" class="output empty">尚未生成</div>
     </div>
 
     <div class="footer">
-      <span>快捷键：<kbd>⌘</kbd>+<kbd>V</kbd> 粘贴 · <kbd>⌘</kbd>+<kbd>↩</kbd> 回车也可以触发替换</span>
+      <span>快捷键：<kbd>⌘</kbd>+<kbd>V</kbd> 粘贴 · <kbd>⌘</kbd>+<kbd>↩</kbd> 回车也可以触发转换</span>
       <span id="matchInfo">未匹配</span>
     </div>
   </main>
 
 <script>
 (function () {
-  var SOURCE = 'https://www.skyvendorise.com';
-  var TARGET = 'https://label.alibaba-inc.com';
+  // 两个方向的配置
+  var DIRECTIONS = [
+    {
+      name: '外部 → 内部',
+      fromLabel: '外部',
+      toLabel: '内部',
+      source: 'https://www.skyvendorise.com',
+      target: 'https://label.alibaba-inc.com',
+      inputLabel: '粘贴外部网址',
+      outputLabel: '转换后是内部网址',
+      placeholder: 'https://www.skyvendorise.com/corpora/labeling/sdk?subTaskId=68233815&missionType=sample&taskId=51972&projectId=5508'
+    },
+    {
+      name: '内部 → 外部',
+      fromLabel: '内部',
+      toLabel: '外部',
+      source: 'https://label.alibaba-inc.com',
+      target: 'https://www.skyvendorise.com',
+      inputLabel: '粘贴内部网址',
+      outputLabel: '转换后是外部网址',
+      placeholder: 'https://label.alibaba-inc.com/corpora/labeling/sdk?subTaskId=68233815&missionType=sample&taskId=51972&projectId=5508'
+    }
+  ];
 
+  var currentDirIndex = 0; // 0 = 外部→内部, 1 = 内部→外部
+
+  // DOM 元素
   var input = document.getElementById('input');
   var output = document.getElementById('output');
   var openBtn = document.getElementById('openBtn');
   var copyBtn = document.getElementById('copyBtn');
+  var switchBtn = document.getElementById('switchBtn');
   var status = document.getElementById('status');
   var statusText = document.getElementById('statusText');
   var hint = document.getElementById('hint');
   var matchInfo = document.getElementById('matchInfo');
+  var badgeFrom = document.getElementById('badgeFrom');
+  var badgeTo = document.getElementById('badgeTo');
+  var ruleFrom = document.getElementById('ruleFrom');
+  var ruleTo = document.getElementById('ruleTo');
+  var inputLabel = document.getElementById('inputLabel');
+  var outputLabel = document.getElementById('outputLabel');
 
   var currentResult = '';
-  var currentStatus = 'idle'; // idle | ok | warn
+
+  function getDir() {
+    return DIRECTIONS[currentDirIndex];
+  }
 
   function normalizeSlashes(s) {
-    // 去掉协议后紧跟的所有多余斜杠，避免拼接时出现 //
     var m = s.match(/^([a-zA-Z][a-zA-Z0-9+.\-]*:\/\/)(\/*)([\s\S]*)$/);
     if (!m) return s;
     return m[1] + m[3].replace(/^\/+/, '');
   }
 
-  function startsWithSource(url) {
+  function startsWithSource(url, source) {
     if (!url) return false;
     var lower = url.toLowerCase();
-    var srcLower = SOURCE.toLowerCase();
-    // 允许源前缀末尾可选带 /
+    var srcLower = source.toLowerCase();
     if (lower === srcLower) return true;
     if (lower === srcLower + '/') return true;
     return lower.indexOf(srcLower + '/') === 0;
   }
 
   function compute(url) {
-    if (!startsWithSource(url)) {
+    var dir = getDir();
+    if (!startsWithSource(url, dir.source)) {
       return { matched: false, value: url };
     }
-    // 找到源前缀的实际结束位置（保留用户输入的大小写）
-    var cut = SOURCE.length;
+    var cut = dir.source.length;
     if (url.charAt(cut) === '/') cut += 1;
     var rest = url.slice(cut);
-    var value = normalizeSlashes(TARGET + '/' + rest.replace(/^\/+/, ''));
+    var value = normalizeSlashes(dir.target + '/' + rest.replace(/^\/+/, ''));
     return { matched: true, value: value };
   }
 
   function setStatus(kind, text) {
-    currentStatus = kind;
     status.className = 'status' + (kind === 'ok' ? ' ok' : kind === 'warn' ? ' warn' : '');
     statusText.textContent = text;
   }
@@ -291,8 +398,24 @@
     copyBtn.disabled = !hasResult;
   }
 
+  // 更新界面上的方向相关元素
+  function updateDirectionUI() {
+    var dir = getDir();
+    badgeFrom.textContent = dir.fromLabel;
+    badgeTo.textContent = dir.toLabel;
+    ruleFrom.textContent = dir.source;
+    ruleTo.textContent = dir.target;
+    inputLabel.textContent = dir.inputLabel;
+    outputLabel.textContent = dir.outputLabel;
+    input.placeholder = dir.placeholder;
+    // 切换 badge 颜色类
+    badgeFrom.className = 'badge ' + (dir.fromLabel === '外部' ? 'badge-external' : 'badge-internal');
+    badgeTo.className = 'badge ' + (dir.toLabel === '内部' ? 'badge-internal' : 'badge-external');
+  }
+
   function render(rawUrl) {
     var url = (rawUrl || '').trim();
+    var dir = getDir();
     currentResult = '';
 
     if (!url) {
@@ -309,10 +432,10 @@
     if (!r.matched) {
       output.textContent = url;
       output.classList.remove('empty');
-      matchInfo.textContent = '未匹配源前缀，已原样保留';
+      matchInfo.textContent = '未匹配' + dir.fromLabel + '前缀，已原样保留';
       setStatus('warn', '未匹配到规则');
-      showHint('输入的 URL 不是以 ' + SOURCE + ' 开头，已按原样保留。你可以直接点"打开替换后的 URL"访问原始地址。');
-      currentResult = url; // 允许用户直接打开原 URL
+      showHint('输入的网址不是以 ' + dir.source + ' 开头（不是' + dir.fromLabel + '网址），已按原样保留。你可以直接点"打开转换后的网址"访问原始地址。');
+      currentResult = url;
       refreshButtons();
       return;
     }
@@ -320,15 +443,22 @@
     currentResult = r.value;
     output.textContent = r.value;
     output.classList.remove('empty');
-    matchInfo.textContent = '已匹配并替换前缀';
-    setStatus('ok', '替换成功');
+    matchInfo.textContent = '已匹配：' + dir.fromLabel + ' → ' + dir.toLabel;
+    setStatus('ok', '转换成功');
     showHint('');
     refreshButtons();
   }
 
+  // 切换方向
+  switchBtn.addEventListener('click', function () {
+    currentDirIndex = (currentDirIndex + 1) % DIRECTIONS.length;
+    updateDirectionUI();
+    // 重新计算当前输入
+    render(input.value);
+  });
+
   input.addEventListener('input', function () { render(input.value); });
   input.addEventListener('paste', function () {
-    // 部分浏览器 paste 事件早于 input，稍后再渲染一次以保险
     setTimeout(function () { render(input.value); }, 0);
   });
   input.addEventListener('keydown', function (e) {
@@ -379,7 +509,8 @@
     }
   }
 
-  // 初始渲染
+  // 初始化
+  updateDirectionUI();
   render(input.value);
 })();
 </script>
