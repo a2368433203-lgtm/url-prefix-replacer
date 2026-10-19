@@ -60,6 +60,10 @@ git commit -m "update"
 git push
 ```
 
+## 作者与反馈
+
+作者：Niko—554818 ｜ 问题反馈请找作者
+
 ## License
 
 MIT

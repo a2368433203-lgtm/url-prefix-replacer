@@ -248,9 +248,25 @@
     font-size: 11px;
     color: #334155;
   }
+  /* 全页水印：盖在最上层但完全不影响点击 */
+  .watermark {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 9999;
+    opacity: 0.06;
+    background-repeat: repeat;
+  }
+  .author-line {
+    margin-top: 14px;
+    text-align: center;
+    font-size: 12px;
+    color: #94a3b8;
+  }
 </style>
 </head>
 <body>
+  <div class="watermark" id="watermark" aria-hidden="true"></div>
   <main class="card">
     <h1>网址转换器</h1>
     <p class="subtitle">在"晓天荟萃"和"阿里内部"网址之间互相转换，路径与查询参数原样保留。</p>
@@ -297,6 +313,7 @@
       <span>快捷键：<kbd>⌘</kbd>+<kbd>V</kbd> 粘贴 · <kbd>⌘</kbd>+<kbd>↩</kbd> 回车也可以触发转换</span>
       <span id="matchInfo">未匹配</span>
     </div>
+    <div class="author-line">作者：Niko—554818 ｜ 问题反馈请找作者</div>
   </main>
 
 <script>
@@ -529,6 +546,16 @@
       return false;
     }
   }
+
+  // 水印：整页平铺斜向文字，encodeURIComponent 保证中文和特殊符号不乱码
+  (function buildWatermark() {
+    var svg = "<svg xmlns='http://www.w3.org/2000/svg' width='300' height='220'>"
+      + "<text x='-30' y='100' font-size='15' font-weight='600' fill='#475569' font-family='-apple-system, PingFang SC, sans-serif' transform='rotate(-25 -30 100)'>作者：Niko—554818</text>"
+      + "<text x='-20' y='128' font-size='12' fill='#475569' font-family='-apple-system, PingFang SC, sans-serif' transform='rotate(-25 -20 128)'>问题反馈请找作者</text>"
+      + "</svg>";
+    document.getElementById('watermark').style.backgroundImage =
+      "url(\"data:image/svg+xml;utf8," + encodeURIComponent(svg) + "\")";
+  })();
 
   // 初始化
   updateDirectionUI();
